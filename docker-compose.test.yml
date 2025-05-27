@@ -1,0 +1,15 @@
+services:
+  api:
+    environment:
+      POSTGRES_DB: test_db
+      DDL_AUTO: create-drop
+
+  db:
+    environment:
+      POSTGRES_DB: test_db
+    volumes:
+      - db-data-test:/var/lib/postgresql/data
+
+volumes:
+  db-data-test:
+    driver: local

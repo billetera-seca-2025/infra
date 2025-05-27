@@ -1,0 +1,70 @@
+services:
+  app:
+    build:
+      context: ../billetera-seca-web-app
+      target: production
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - /app/node_modules
+      - /app/.next
+    tty: true
+    command: npm start
+    depends_on:
+      - api
+      - api-mock
+    profiles:
+      - prod
+      - test
+
+  api-mock:
+    build:
+      context: ../api-fake
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    profiles:
+      - prod
+      - test
+
+  api:
+    build:
+      context: ../billetera-seca
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      POSTGRES_DB: billetera
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      DDL_AUTO: update
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles:
+      - prod
+      - test
+
+  db:
+    image: postgres:15
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: billetera
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    profiles:
+      - prod
+      - test
+
+volumes:
+  db-data:
+    driver: local
