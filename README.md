@@ -1,5 +1,17 @@
 # infra
 
+## Folder Structure
+```
+├── infra/
+│   └── ...
+├── billetera-seca/
+│   └── ...
+├── api-fake/
+│   └── ...
+└── billetera-seca-web-app/
+    └── ...
+```
+
 ## Running the Environment with Docker Compose
 
 ### Production Environment
