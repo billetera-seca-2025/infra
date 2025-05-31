@@ -1,70 +1,51 @@
 services:
-  app:
-    build:
-      context: ../billetera-seca-web-app
-      target: production
-      dockerfile: Dockerfile
+  web-app:
+    image: ghcr.io/billetera-seca-2025/billetera-seca-web-app:latest
     ports:
       - "3000:3000"
-    volumes:
-      - /app/node_modules
-      - /app/.next
-    tty: true
-    command: npm start
-    depends_on:
-      - api
-      - api-mock
-    profiles:
-      - prod
-      - test
+    networks:
+        - billetera-seca-network
+    environment:
+      - NEXT_PUBLIC_API_URL=http://api:8080
 
-  api-mock:
-    build:
-      context: ../api-fake
-      dockerfile: Dockerfile
+  fake-api:
+
+    image: ghcr.io/billetera-seca-2025/fake-api:latest
     ports:
       - "8081:8081"
-    profiles:
-      - prod
-      - test
+    networks:
+      - billetera-seca-network
 
   api:
-    build:
-      context: ../billetera-seca
-      dockerfile: Dockerfile
+    image: ghcr.io/billetera-seca-2025/billetera-seca-dev:latest
     ports:
       - "8080:8080"
     environment:
-      POSTGRES_DB: billetera
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      DDL_AUTO: update
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      POSTGRES_USER: ${SPRING_DATASOURCE_USERNAME}
+      POSTGRES_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
     depends_on:
-      db:
-        condition: service_healthy
-    profiles:
-      - prod
-      - test
+      - api-db
+    networks:
+      - billetera-seca-network
 
-  db:
+  api-db:
     image: postgres:15
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB: billetera
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${SPRING_DATASOURCE_USERNAME}
+      POSTGRES_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
     volumes:
-      - db-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-    profiles:
-      - prod
-      - test
+      - api-db-data:/var/lib/postgresql/data
+    networks:
+      - billetera-seca-network
 
 volumes:
-  db-data:
+  api-db-data:
     driver: local
+
+networks:
+  billetera-seca-network:
+    driver: bridge
