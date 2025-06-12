@@ -1,3 +1,5 @@
+version: '3.9'
+
 services:
   web-app:
     image: ghcr.io/billetera-seca-2025/billetera-seca-web-app:latest
@@ -7,9 +9,11 @@ services:
       - billetera-seca-network
     environment:
       - NEXT_PUBLIC_API_URL=http://api:8080
-    deploy: {}  # opcional
-    mem_limit: 256m
-    cpus: 0.5
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: '0.5'
 
   fake-api:
     image: ghcr.io/billetera-seca-2025/fake-api:latest
@@ -17,8 +21,11 @@ services:
       - "8081:8081"
     networks:
       - billetera-seca-network
-    mem_limit: 128m
-    cpus: 0.3
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+          cpus: '0.3'
 
   api:
     image: ghcr.io/billetera-seca-2025/billetera-seca-dev:latest
@@ -32,8 +39,11 @@ services:
       - api-db
     networks:
       - billetera-seca-network
-    mem_limit: 512m
-    cpus: 1.0
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: '1.0'
 
   api-db:
     image: postgres:15
@@ -47,5 +57,16 @@ services:
       - api-db-data:/var/lib/postgresql/data
     networks:
       - billetera-seca-network
-    mem_limit: 512m
-    cpus: 0.8
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: '0.8'
+
+volumes:
+  api-db-data:
+    driver: local
+
+networks:
+  billetera-seca-network:
+    driver: bridge
