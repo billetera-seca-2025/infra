@@ -1,20 +1,31 @@
+version: '3.9'
+
 services:
   web-app:
     image: ghcr.io/billetera-seca-2025/billetera-seca-web-app:latest
     ports:
       - "3000:3000"
     networks:
-        - billetera-seca-network
+      - billetera-seca-network
     environment:
       - NEXT_PUBLIC_API_URL=http://api:8080
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: '0.5'
 
   fake-api:
-
     image: ghcr.io/billetera-seca-2025/fake-api:latest
     ports:
       - "8081:8081"
     networks:
       - billetera-seca-network
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+          cpus: '0.3'
 
   api:
     image: ghcr.io/billetera-seca-2025/billetera-seca-dev:latest
@@ -28,11 +39,16 @@ services:
       - api-db
     networks:
       - billetera-seca-network
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: '1.0'
 
   api-db:
     image: postgres:15
     ports:
-      - "5432:5432"
+      - "15432:5432"
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${SPRING_DATASOURCE_USERNAME}
@@ -41,6 +57,23 @@ services:
       - api-db-data:/var/lib/postgresql/data
     networks:
       - billetera-seca-network
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: '0.8'
+
+  locust:
+    image: locustio/locust
+    volumes:
+      - ./load-tests:/mnt/locust
+    working_dir: /mnt/locust
+    command: -f locustfile.py --host=http://api:8080
+    ports:
+      - "8089:8089"
+    networks:
+      - billetera-seca-network
+
 
 volumes:
   api-db-data:
